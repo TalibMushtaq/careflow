@@ -26,7 +26,6 @@ def get_doctors():
         )
         
     doctors = query.all()
-    schema = DoctorResponseSchema(many=True)
-    serialized = schema.dump([d.to_dict() for d in doctors])
+    serialized = [d.to_dict() for d in doctors]
     
     return api_response(True, data=serialized, status_code=200)

@@ -76,8 +76,7 @@ def get_my_appointments():
         .order_by(Appointment.appointment_date.desc(), Appointment.queue_number.asc())\
         .all()
         
-    schema = AppointmentResponseSchema(many=True)
-    serialized = schema.dump([a.to_dict() for a in appointments])
+    serialized = [a.to_dict() for a in appointments]
     
     return api_response(True, data=serialized, status_code=200)
 
@@ -111,8 +110,7 @@ def get_doctor_today_appointments():
         appointment_date=target_date
     ).order_by(Appointment.queue_number.asc()).all()
     
-    schema = AppointmentResponseSchema(many=True)
-    serialized = schema.dump([a.to_dict() for a in appointments])
+    serialized = [a.to_dict() for a in appointments]
     
     return api_response(True, data=serialized, status_code=200)
 
