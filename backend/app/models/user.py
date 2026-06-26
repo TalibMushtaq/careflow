@@ -10,7 +10,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum('patient', 'doctor', name='user_roles'), nullable=False)
-    session_token = db.Column(db.String(255), nullable=True)
+    session_token = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
