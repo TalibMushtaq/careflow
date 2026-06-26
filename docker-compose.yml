@@ -11,7 +11,7 @@ services:
       MYSQL_USER: careflow_user
       MYSQL_PASSWORD: careflow_password
     ports:
-      - "3306:3306"
+      - "${DB_HOST_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:

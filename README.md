@@ -154,3 +154,28 @@ Check [openapi.yaml](openapi.yaml) for full Swagger/OpenAPI documentation.
 - `GET /api/v1/appointments/me` - List logged-in patient's appointments (Patient only)
 - `GET /api/v1/appointments/doctor/today` - Today's appointments sorted by queue number (Doctor only)
 - `PATCH /api/v1/appointments/<id>/status` - Update status to `serving`, `completed`, `absent`, or `cancelled`
+
+---
+
+## Troubleshooting
+
+### Port 3306 Is Already Allocated
+
+If you get a bind error on port 3306 (e.g., `Bind for 0.0.0.0:3306 failed: port is already allocated`):
+
+1. **Stop the conflicting container**:
+   If you have a conflicting container running (like `careflow-mysql`), you can stop it using:
+   ```bash
+   docker stop careflow-mysql
+   ```
+   Or if it's a native MySQL instance on your host:
+   ```bash
+   sudo systemctl stop mysql
+   ```
+
+2. **Or, run the database on a different host port**:
+   If you want to keep your existing container running, you can launch the docker compose services with a different host port using:
+   ```bash
+   DB_HOST_PORT=3307 docker compose up --build
+   ```
+   *(The backend container will still communicate with the database internally inside the docker network, so no other settings need to be changed.)*
