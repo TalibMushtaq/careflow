@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: CareFlow REST API
+  description: Hospital Appointment Booking & Patient Queue Management API.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development server
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Registers a patient or a doctor. If doctor, specialty and room_number are required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - role
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  example: patient@careflow.com
+                password:
+                  type: string
+                  example: password123
+                role:
+                  type: string
+                  enum: [patient, doctor]
+                  example: patient
+                specialty:
+                  type: string
+                  example: Cardiology
+                room_number:
+                  type: string
+                  example: "101"
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error or Email already exists
+
+  /auth/login:
+    post:
+      summary: Login to obtain JWT Token
+      description: Logs in a registered user and returns a bearer token and user summary.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: doctor1@careflow.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    type: object
+
+  /doctors:
+    get:
+      summary: Get all doctors
+      description: Public endpoint to fetch all registered doctors. Supports search and filters.
+      parameters:
+        - name: search
+          in: query
+          description: Search term for doctor name or specialty
+          schema:
+            type: string
+        - name: specialty
+          in: query
+          description: Specific specialty to filter by
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of doctors
+
+  /appointments/book:
+    post:
+      summary: Book a new appointment
+      description: Book a slot for a specific doctor on a target date. Patient only.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - doctor_id
+                - appointment_date
+                - time_slot
+              properties:
+                doctor_id:
+                  type: integer
+                  example: 1
+                appointment_date:
+                  type: string
+                  format: date
+                  example: "2026-07-10"
+                time_slot:
+                  type: string
+                  example: "09:00 - 09:30"
+      responses:
+        '201':
+          description: Appointment booked successfully
+        '400':
+          description: Validation error or Slot already booked
+
+  /appointments/me:
+    get:
+      summary: Get current patient's appointments
+      description: Fetches all appointments booked by the authenticated patient. Patient only.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: A list of patient appointments
+
+  /appointments/doctor/today:
+    get:
+      summary: Get today's appointments for doctor
+      description: Fetches doctor's patients for today, ordered by queue number. Doctor only.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          description: Overrides today's date (format YYYY-MM-DD)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Today's queue list
+
+  /appointments/{id}/status:
+    patch:
+      summary: Update appointment status
+      description: Doctors can mark serving/completed/absent. Patients can cancel if scheduled.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [serving, completed, absent, cancelled]
+                  example: serving
+      responses:
+        '200':
+          description: Appointment status updated
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
