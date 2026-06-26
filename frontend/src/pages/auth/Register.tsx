@@ -7,21 +7,28 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Stethoscope, Lock, Mail, User as UserIcon, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 
+const COMMON_SPECIALTIES = [
+  "Cardiology", "Pediatrics", "Dermatology", "Orthopedics", "Neurology",
+  "General Medicine", "Ophthalmology", "Psychiatry", "Gynecology", "ENT"
+];
+
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters long'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters long'),
   role: z.enum(['patient', 'doctor']),
+  specialtySelect: z.string().optional(),
   specialty: z.string().optional(),
   room_number: z.string().optional(),
 }).refine((data) => {
   if (data.role === 'doctor') {
-    return !!data.specialty && data.specialty.trim() !== '' && !!data.room_number && data.room_number.trim() !== '';
+    const spec = data.specialtySelect === 'other' ? data.specialty : data.specialtySelect;
+    return !!spec && spec.trim() !== '' && !!data.room_number && data.room_number.trim() !== '';
   }
   return true;
 }, {
   message: 'Specialty and Room Number are required for doctors',
-  path: ['specialty'],
+  path: ['specialtySelect'],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -40,6 +47,7 @@ export const Register: React.FC = () => {
   });
 
   const watchRole = watch('role');
+  const watchSpecialtySelect = watch('specialtySelect');
 
   React.useEffect(() => {
     if (watchRole) {
@@ -49,6 +57,7 @@ export const Register: React.FC = () => {
 
   const onSubmit = async (values: RegisterFormValues) => {
     setSubmitting(true);
+    const resolvedSpecialty = values.specialtySelect === 'other' ? values.specialty : values.specialtySelect;
     // Clean up empty optional fields for patients
     const payload = {
       name: values.name,
@@ -56,7 +65,7 @@ export const Register: React.FC = () => {
       password: values.password,
       role: values.role,
       ...(values.role === 'doctor' ? {
-        specialty: values.specialty,
+        specialty: resolvedSpecialty,
         room_number: values.room_number,
       } : {})
     };
@@ -241,14 +250,26 @@ export const Register: React.FC = () => {
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Specialty
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Cardiology"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-hospital-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
-                    {...register('specialty')}
-                  />
-                  {errors.specialty && (
-                    <span className="text-xs text-red-500 font-medium pl-1">{errors.specialty.message}</span>
+                  <select
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-hospital-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-700 dark:text-slate-250 font-medium"
+                    {...register('specialtySelect')}
+                  >
+                    <option value="">-- Select Specialty --</option>
+                    {COMMON_SPECIALTIES.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                    <option value="other">Other (Type custom specialty...)</option>
+                  </select>
+                  {watchSpecialtySelect === 'other' && (
+                    <input
+                      type="text"
+                      placeholder="Type custom specialty..."
+                      className="w-full mt-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-hospital-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-700 dark:text-slate-250 animate-in slide-in-from-top-2 duration-100 font-medium"
+                      {...register('specialty')}
+                    />
+                  )}
+                  {errors.specialtySelect && (
+                    <span className="text-xs text-red-500 font-medium pl-1">{errors.specialtySelect.message}</span>
                   )}
                 </div>
 
